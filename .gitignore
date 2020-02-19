@@ -1,6 +1,5 @@
-*.sublime-workspace
 .DS_Store
 build/
+files/
 node_modules
 npm-debug.log
-*-10m.json

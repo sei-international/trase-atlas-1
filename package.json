@@ -1,7 +1,7 @@
 {
-  "name": "us-atlas",
-  "version": "3.0.0",
-  "description": "Pre-built TopoJSON from the U.S. Census Bureau.",
+  "name": "trase-atlas",
+  "version": "0.0.1",
+  "description": "Pre-built TopoJSON for use with Trase data",
   "license": "ISC",
   "keywords": [
     "topojson",
@@ -9,27 +9,27 @@
     "shapefile"
   ],
   "author": {
-    "name": "Mike Bostock",
-    "url": "https://bost.ocks.org/mike"
+    "name": "Ben Ayre"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/topojson/us-atlas.git"
+    "url": "https://github.com/bayre/trase-atlas.git"
   },
   "files": [
-    "*-10m.json"
+    "files"
   ],
   "scripts": {
     "prepublishOnly": "bash prepublish",
     "postpublish": "git push && git push --tags"
   },
   "devDependencies": {
-    "d3-dsv": "^1.0.3",
-    "d3-geo-projection": "^2.0.0",
+    "d3-dsv": "^1.2.0",
+    "d3-geo-projection": "^2.8.1",
+    "mapshaper": "^0.4.158",
     "ndjson-cli": "^0.3.0",
     "shapefile": "^0.6.1",
     "topojson-client": "^3.0.0",
     "topojson-server": "^3.0.0",
     "topojson-simplify": "^3.0.0"
-  }
+  },
 }

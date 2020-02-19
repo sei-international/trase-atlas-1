@@ -1,75 +1,186 @@
 #!/bin/bash
 
-rm -rvf *-10m.json
-mkdir -p build
+rm -r build files
+mkdir -p build files
 
-if [ ! -f build/cb_2017_us_county_5m.shp ]; then
-  curl -o build/cb_2017_us_county_5m.zip 'https://www2.census.gov/geo/tiger/GENZ2017/shp/cb_2017_us_county_5m.zip'
-  unzip -od build build/cb_2017_us_county_5m.zip cb_2017_us_county_5m.shp cb_2017_us_county_5m.dbf
-  chmod a-x build/cb_2017_us_county_5m.*
+# Argentina - download data (IGN 2019)
+if [ ! -f build/argentina.shp ]; then
+  curl -o build/argentina.zip 'http://ramsac.ign.gob.ar/operaciones_sig/shp_from_geoserver/download.php?f=c2hwOjpkZXBhcnRhbWVudG8uemlw'
+  unzip -p build/argentina.zip departamento.shp >build/argentina.shp
+  unzip -p build/argentina.zip departamento.dbf >build/argentina.dbf
+  chmod a-x build/argentina.*
 fi
 
-if [ ! -f build/cb_2017_us_state_5m.shp ]; then
-  curl -o build/cb_2017_us_state_5m.zip 'https://www2.census.gov/geo/tiger/GENZ2017/shp/cb_2017_us_state_5m.zip'
-  unzip -od build build/cb_2017_us_state_5m.zip cb_2017_us_state_5m.shp cb_2017_us_state_5m.dbf
-  chmod a-x build/cb_2017_us_state_5m.*
-fi
+# Argentina - create dictionary
+aws s3 cp s3://trase-storage/data/6-BOUNDARIES/COUNTRIES/ARGENTINA/DEPARTMENTS/2019/AR_DEPARTMENTS.csv build/dictionary.csv
+dictionary="$(awk -F "\"*;\"*" -v OFS=';' '{print $2, $5, $7, $9}' build/dictionary.csv)"
+echo "$dictionary" > build/dictionary.csv
 
-if [ ! -f build/cb_2017_us_nation_5m.shp ]; then
-  curl -o build/cb_2017_us_nation_5m.zip 'https://www2.census.gov/geo/tiger/GENZ2017/shp/cb_2017_us_nation_5m.zip'
-  unzip -od build build/cb_2017_us_nation_5m.zip cb_2017_us_nation_5m.shp cb_2017_us_nation_5m.dbf
-  chmod a-x build/cb_2017_us_nation_5m.*
-fi
-
-geo2topo -q 1e5 -n counties=<( \
-    shp2json -n build/cb_2017_us_county_5m.shp \
-      | ndjson-filter '!/000$/.test(d.properties.GEOID)' \
-      | ndjson-map '(d.id = d.properties.GEOID, delete d.properties, d)') \
+# Argentina - unprojected
+geo2topo -q 1e5 -n level3=<( \
+    shp2json -n build/argentina.shp \
+      | ndjson-filter 'd.properties.in1 !== "94021" && d.properties.in1 !== "94028"' \
+      | ndjson-map '(d.id = d.properties.in1, delete d.properties, d)') \
   | toposimplify -f -s 1e-7 \
-  | topomerge states=counties -k 'd.id.slice(0, 2)' \
-  | topomerge nation=states \
+  | topomerge level2=level3 -k 'd.id.slice(0, 2)' \
+  | topomerge level1=level2 \
   | node ./properties.js \
-  > counties-10m.json
+  > files/argentina.json
 
-geo2topo -q 1e5 -n counties=<( \
-    shp2json -n build/cb_2017_us_county_5m.shp \
-      | ndjson-filter '!/000$/.test(d.properties.GEOID)' \
-      | ndjson-map '(d.id = d.properties.GEOID, delete d.properties, d)' \
-      | geoproject -n 'd3.geoAlbersUsa().scale(1300).translate([487.5, 305])') \
-  | toposimplify -f -p 0.25 \
-  | topomerge states=counties -k 'd.id.slice(0, 2)' \
-  | topomerge nation=states \
+# Argentina - projected - http://pacificprojections.spc.int/22182
+geo2topo -q 1e5 -n level3=<( \
+    shp2json -n build/argentina.shp \
+      | ndjson-filter 'd.properties.in1 !== "94021" && d.properties.in1 !== "94028"' \
+      | ndjson-map '(d.id = d.properties.in1, delete d.properties, d)' \
+      | geoproject -n 'd3.geoTransverseMercator().rotate([69, 0]).scale(980.2979807902225).translate([394.0295922144024, -352.4488151969341])') \
+  | toposimplify -f -p 0.01 \
+  | toposimplify -f -s 1e-7 \
+  | topomerge level2=level3 -k 'd.id.slice(0, 2)' \
+  | topomerge level1=level2 \
   | node ./properties.js \
-  > counties-albers-10m.json
+  > files/argentina-projected.json
 
-geo2topo -q 1e5 -n states=<( \
-    shp2json -n build/cb_2017_us_state_5m.shp \
-      | ndjson-filter '!/000$/.test(d.properties.GEOID)' \
-      | ndjson-map '(d.id = d.properties.GEOID, d.properties = {name: d.properties.NAME}, d)') \
+# Brazil - download data (IBGE 2018)
+if [ ! -f build/brazil.shp ]; then
+  curl -o build/brazil.zip 'ftp://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2018/Brasil/BR/br_municipios.zip'
+  unzip -p build/brazil.zip BRMUE250GC_SIR.shp >build/brazil.shp
+  unzip -p build/brazil.zip BRMUE250GC_SIR.dbf >build/brazil.dbf
+  chmod a-x build/brazil.*
+fi
+
+# Brazil - create dictionary
+aws s3 cp s3://trase-storage/data/6-BOUNDARIES/COUNTRIES/BRAZIL/IBGE/2017/OUT/br_municipalities_2017.csv build/dictionary.csv
+dictionary="$(iconv -f ISO8859-1 -t UTF8 build/dictionary.csv | awk -F "\"*;\"*" -v OFS=';' '{print $2, $3, $4, $5}')"
+echo "$dictionary" > build/dictionary.csv
+
+# Brazil - mapshaper simplification (work-around for broken merges)
+mapshaper build/brazil.shp -simplify 5% -clean -o force build/brazil.shp
+
+# Brazil - unprojected
+geo2topo -q 1e5 -n level3=<( \
+    shp2json -n build/brazil.shp \
+      | ndjson-map '(d.id = d.properties.CD_GEOCMU, delete d.properties, d)') \
+  | topomerge level2=level3 -k 'd.id.slice(0, 2)' \
+  | topomerge level1=level2 \
+  | node ./properties.js \
+  > files/brazil.json
+
+# Brazil - projected - https://epsg.io/5880
+geo2topo -q 1e5 -n level3=<( \
+    shp2json -n build/brazil.shp \
+      | ndjson-map '(d.id = d.properties.CD_GEOCMU, delete d.properties, d)' \
+      | geoproject -n 'd3.geoPolyconic().rotate([54, 0]).scale(836.2137562522385).translate([463.8813199818494, 97.39056551533082])') \
+  | topomerge level2=level3 -k 'd.id.slice(0, 2)' \
+  | topomerge level1=level2 \
+  | node ./properties.js \
+  > files/brazil-projected.json
+
+# Colombia - download data (DANE 2017)
+# https://geoportal.dane.gov.co/descargas/mgn_2017/MGN2017_00_NACIONAL.rar
+declare -a filetypes=(".shp" ".dbf")
+if [ ! -f build/colombia.shp ]; then
+  for i in "${filetypes[@]}"
+  do
+    aws s3 cp s3://trase-storage/data/6-BOUNDARIES/COUNTRIES/COLOMBIA/DANE/IN/MGN2017_00_COLOMBIA/ADMINISTRATIVO/MGN_MPIO_POLITICO"$i" build/colombia"$i"
+  done
+  chmod a-x build/colombia.*
+fi
+
+# Colombia - create dictionary
+shp2json -n --encoding UTF-8 build/colombia.shp \
+  | ndjson-map 'd.properties' \
+  | json2csv -n > build/dictionary.csv
+dictionary="$(awk -F "\"*,\"*" -v OFS=';' '{print $3, $4, $2, $8}' build/dictionary.csv)"
+echo "$dictionary" > build/dictionary.csv
+
+# Colombia - unprojected
+geo2topo -q 1e5 -n level3=<( \
+    shp2json -n build/colombia.shp \
+      | ndjson-map '(d.id = d.properties.MPIO_CCDGO, delete d.properties, d)') \
   | toposimplify -f -s 1e-7 \
-  | topomerge nation=states \
-  > states-10m.json
+  | topomerge level2=level3 -k 'd.id.slice(0, 2)' \
+  | topomerge level1=level2 \
+  | node ./properties.js \
+  > files/colombia.json
 
-geo2topo -q 1e5 -n states=<( \
-    shp2json -n build/cb_2017_us_state_5m.shp \
-      | ndjson-filter '!/000$/.test(d.properties.GEOID)' \
-      | ndjson-map '(d.id = d.properties.GEOID, d.properties = {name: d.properties.NAME}, d)' \
-      | geoproject -n 'd3.geoAlbersUsa().scale(1300).translate([487.5, 305])') \
-  | toposimplify -f -p 0.25 \
-  | topomerge nation=states \
-  > states-albers-10m.json
+# Colombia - projected - https://epsg.io/21899
+geo2topo -q 1e5 -n level3=<( \
+    shp2json -n build/colombia.shp \
+      | ndjson-map '(d.id = d.properties.MPIO_CCDGO, delete d.properties, d)' \
+      | geoproject -n 'd3.geoTransverseMercator().rotate([68.08091666666667, 4.599047222222222]).scale(1816.4205041593148).translate([681.1027944777343, 601.6964125962452])') \
+  | toposimplify -f -p 0.01 \
+  | topomerge level2=level3 -k 'd.id.slice(0, 2)' \
+  | topomerge level1=level2 \
+  | node ./properties.js \
+  > files/colombia-projected.json
 
-geo2topo -q 1e5 -n nation=<( \
-    shp2json -n build/cb_2017_us_nation_5m.shp \
-      | ndjson-filter '!/000$/.test(d.properties.GEOID)' \
-      | ndjson-map '(d.id = d.properties.GEOID, d.properties = {name: d.properties.NAME}, d)') \
+# Indonesia - download data (BIG 2016)
+if [ ! -f build/indonesia.geojson ]; then
+  aws s3 cp s3://trase-storage/data/6-BOUNDARIES/COUNTRIES/INDONESIA/BIG/OUT/kabupaten_boundaries_2016.geojson build/indonesia.geojson
+  chmod a-x build/indonesia.*
+fi
+
+# Indonesia - create dictionary
+aws s3 cp s3://trase-storage/data/6-BOUNDARIES/COUNTRIES/INDONESIA/BPS/OUT/kabupaten_dictionary_2017_BPS_55.csv build/dictionary.csv
+dictionary="$(awk -F "\"*;\"*" -v OFS=';' '{print $4, $3, $2, $1}' build/dictionary.csv)"
+echo "$dictionary" > build/dictionary.csv
+
+# Indonesia - unprojected
+geo2topo -q 1e5 -n level3=<( \
+    ndjson-cat build/indonesia.geojson \
+      | ndjson-split 'd.features' \
+      | ndjson-map '(d.id = d.properties.kab_code.toString(), delete d.properties, d)') \
   | toposimplify -f -s 1e-7 \
-  > nation-10m.json
+  | topomerge level2=level3 -k 'd.id.slice(0, 2)' \
+  | topomerge level1=level2 \
+  | node ./properties.js \
+  > files/indonesia.json
 
-geo2topo -q 1e5 -n nation=<( \
-    shp2json -n build/cb_2017_us_nation_5m.shp \
-      | ndjson-filter '!/000$/.test(d.properties.GEOID)' \
-      | ndjson-map '(d.id = d.properties.GEOID, d.properties = {name: d.properties.NAME}, d)' \
-      | geoproject -n 'd3.geoAlbersUsa().scale(1300).translate([487.5, 305])') \
-  | toposimplify -f -p 0.25 \
-  > nation-albers-10m.json
+# Indonesia - projected - https://epsg.io/23845
+geo2topo -q 1e5 -n level3=<( \
+    ndjson-cat build/indonesia.geojson \
+      | ndjson-split 'd.features' \
+      | ndjson-map '(d.id = d.properties.kab_code.toString(), delete d.properties, d)' \
+      | geoproject -n 'd3.geoTransverseMercator().rotate([-139.5, 0]).scale(1052.5481799863685).translate([927.2748077807194, 277.41785402287417])') \
+  | toposimplify -f -p 0.01 \
+  | topomerge level2=level3 -k 'd.id.slice(0, 2)' \
+  | topomerge level1=level2 \
+  | node ./properties.js \
+  > files/indonesia-projected.json
+
+# Paraguay - download data (DGEEC 2019)
+if [ ! -f build/paraguay.geojson ]; then
+  curl -o build/paraguay.geojson 'http://geo.stp.gov.py/user/dgeec/api/v2/sql?format=GeoJSON&q=SELECT%20*%20FROM%20dgeec.paraguay_2019_distritos'
+  chmod a-x build/paraguay.*
+fi
+
+# Paraguay - create dictionary
+ndjson-cat build/paraguay.geojson \
+  | ndjson-split 'd.features' \
+  | ndjson-map 'd.properties' \
+  | json2csv -n > build/dictionary.csv
+dictionary="$(awk -F "\"*,\"*" -v OFS=';' '{print $2, $6, $3, $4}' build/dictionary.csv)"
+echo "$dictionary" > build/dictionary.csv
+
+# Paraguay - unprojected
+geo2topo -q 1e5 -n level3=<( \
+    ndjson-cat build/paraguay.geojson \
+      | ndjson-split 'd.features' \
+      | ndjson-map '(d.id = d.properties.cod_2, delete d.properties, d)') \
+  | toposimplify -f -s 1e-7 \
+  | topomerge level2=level3 -k 'd.id.slice(0, 2)' \
+  | topomerge level1=level2 \
+  | node ./properties.js \
+  > files/paraguay.json
+
+# Paraguay - projected - https://epsg.io/32720
+geo2topo -q 1e5 -n level3=<( \
+    ndjson-cat build/paraguay.geojson \
+      | ndjson-split 'd.features' \
+      | ndjson-map '(d.id = d.properties.cod_2, delete d.properties, d)' \
+      | geoproject -n 'd3.geoTransverseMercator().rotate([63, 0]).scale(3874.743636286315).translate([205.86055006293162, -1286.5350680128174])') \
+  | toposimplify -f -p 0.01 \
+  | topomerge level2=level3 -k 'd.id.slice(0, 2)' \
+  | topomerge level1=level2 \
+  | node ./properties.js \
+  > files/paraguay-projected.json
