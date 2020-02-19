@@ -1,6 +1,6 @@
 {
-  "name": "trase-atlas",
-  "version": "0.0.1",
+  "name": "@bayre/trase-atlas",
+  "version": "1.0.0",
   "description": "Pre-built TopoJSON for use with Trase data",
   "license": "ISC",
   "keywords": [
@@ -31,5 +31,5 @@
     "topojson-client": "^3.0.0",
     "topojson-server": "^3.0.0",
     "topojson-simplify": "^3.0.0"
-  },
+  }
 }
