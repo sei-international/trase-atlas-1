@@ -1,6 +1,6 @@
 #!/bin/bash
 
-rm -r build files
+rm -r files
 mkdir -p build files
 
 # Argentina - download data (IGN 2019)
@@ -40,9 +40,9 @@ geo2topo -q 1e5 -n level3=<( \
   | node ./properties.js \
   > files/argentina-projected.json
 
-# Brazil - download data (IBGE 2018)
+# Brazil - download data (IBGE 2017)
 if [ ! -f build/brazil.shp ]; then
-  curl -o build/brazil.zip 'ftp://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2018/Brasil/BR/br_municipios.zip'
+  curl -o build/brazil.zip 'ftp://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2017/Brasil/BR/br_municipios.zip'
   unzip -p build/brazil.zip BRMUE250GC_SIR.shp >build/brazil.shp
   unzip -p build/brazil.zip BRMUE250GC_SIR.dbf >build/brazil.dbf
   chmod a-x build/brazil.*
@@ -93,11 +93,13 @@ shp2json -n --encoding UTF-8 build/colombia.shp \
 dictionary="$(awk -F "\"*,\"*" -v OFS=';' '{print $3, $4, $2, $8}' build/dictionary.csv)"
 echo "$dictionary" > build/dictionary.csv
 
+# Colombia - mapshaper simplification (work-around for broken merges)
+mapshaper build/colombia.shp -simplify 0.5% -clean -o force build/colombia.shp
+
 # Colombia - unprojected
 geo2topo -q 1e5 -n level3=<( \
     shp2json -n build/colombia.shp \
       | ndjson-map '(d.id = d.properties.MPIO_CCDGO, delete d.properties, d)') \
-  | toposimplify -f -s 1e-7 \
   | topomerge level2=level3 -k 'd.id.slice(0, 2)' \
   | topomerge level1=level2 \
   | node ./properties.js \
@@ -108,7 +110,6 @@ geo2topo -q 1e5 -n level3=<( \
     shp2json -n build/colombia.shp \
       | ndjson-map '(d.id = d.properties.MPIO_CCDGO, delete d.properties, d)' \
       | geoproject -n 'd3.geoTransverseMercator().rotate([68.08091666666667, 4.599047222222222]).scale(1816.4205041593148).translate([681.1027944777343, 601.6964125962452])') \
-  | toposimplify -f -p 0.01 \
   | topomerge level2=level3 -k 'd.id.slice(0, 2)' \
   | topomerge level1=level2 \
   | node ./properties.js \
