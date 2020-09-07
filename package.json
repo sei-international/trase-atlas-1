@@ -1,6 +1,6 @@
 {
   "name": "@bayre/trase-atlas",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Pre-built TopoJSON for use with Trase data",
   "license": "ISC",
   "keywords": [
@@ -8,12 +8,10 @@
     "geojson",
     "shapefile"
   ],
-  "author": {
-    "name": "Ben Ayre"
-  },
+  "author": "Ben Ayre",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bayre/trase-atlas.git"
+    "url": "git+https://github.com/bayre/trase-atlas.git"
   },
   "files": [
     "files"
@@ -31,5 +29,11 @@
     "topojson-client": "^3.0.0",
     "topojson-server": "^3.0.0",
     "topojson-simplify": "^3.0.0"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/bayre/trase-atlas/issues"
+  },
+  "homepage": "https://github.com/bayre/trase-atlas#readme",
+  "main": "properties.js",
+  "dependencies": {}
 }
