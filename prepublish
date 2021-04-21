@@ -167,7 +167,7 @@ ndjson-cat build/bolivia.geojson \
   | ndjson-split 'd.features' \
   | ndjson-map 'd.properties' \
   | json2csv -n -q '' > build/dictionary.csv
-dictionary="$(awk -F "," -v OFS=';' '{if (NR!=1) {print sprintf("%06.0f", $4), $3, substr(sprintf("%06.0f", $5), 1, 2), $1} else {print $5, $4, "cod_dept", $1} }' build/dictionary.csv)"
+dictionary="$(awk -F "," -v OFS=';' '{if (NR!=1) {print sprintf("%06.0f", $5), $3, substr(sprintf("%06.0f", $5), 1, 2), $1} else {print $5, $3, "cod_dept", $1} }' build/dictionary.csv)"
 echo "$dictionary" > build/dictionary.csv
 
 # Bolivia - topojson
@@ -175,8 +175,7 @@ geo2topo -q 1e5 -n level3=<( \
     mapshaper build/bolivia.geojson -simplify 2% keep-shapes -clean -o format=geojson - \
       | ndjson-cat \
       | ndjson-split 'd.features' \
-      | ndjson-filter 'd.properties.CODIGO' \
-      | ndjson-map '(d.id = d.properties.CODIGO.toString().padStart(6, "0"), delete d.properties, d)') \
+      | ndjson-map '(d.id = d.properties.cod_mun.toString().padStart(6, "0"), delete d.properties, d)') \
   | topomerge level2=level3 -k 'd.id.slice(0, 2)' \
   | topomerge level1=level2 \
   | node ./properties.js \
