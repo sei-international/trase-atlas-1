@@ -161,3 +161,11 @@ if [ ! -f build/bolivia.geojson ]; then
   aws s3 cp s3://trase-storage/bolivia/spatial/BOUNDARIES/siip/Limite_Municipios.geojson build/bolivia.geojson
   chmod a-x build/bolivia.*
 fi
+
+# Bolivia - dictionary
+ndjson-cat build/bolivia.geojson \
+  | ndjson-split 'd.features' \
+  | ndjson-map 'd.properties' \
+  | json2csv -n -q '' > build/dictionary.csv
+dictionary="$(awk -F "," -v OFS=';' '{if (NR!=1) {print sprintf("%06.0f", $4), $3, substr(sprintf("%06.0f", $5), 1, 2), $1} else {print $5, $4, "cod_dept", $1} }' build/dictionary.csv)"
+echo "$dictionary" > build/dictionary.csv
