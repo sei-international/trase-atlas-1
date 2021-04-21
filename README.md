@@ -19,7 +19,19 @@ To align the names of subnational jurisdictions in different countries, three le
 d3.geoTransverseMercator().rotate([69, 0])
 ````
 
-<img src="https://raw.githubusercontent.com/bayre/trase-atlas/master/img/Argentina.png" width="480" height="300">
+<img src="https://raw.githubusercontent.com/sei-international/trase-atlas/master/img/Argentina.png" width="480" height="300">
+
+### Bolivia
+* Source: [SIIP WFS Server](http://siip.produccion.gob.bo:8080/geoserver/ows)
+* Projection: https://epsg.io/4326
+* Download: TBD
+
+
+```js
+d3.geoTransverseMercator().rotate([52, 0])
+```
+
+<img src="https://raw.githubusercontent.com/sei-international/trase-atlas/master/img/Bolivia.png" width="480" height="300">
 
 ### Brazil
 * Source: [IBGE 2017](https://www.ibge.gov.br/geociencias/organizacao-do-territorio/malhas-territoriais/15774-malhas.html?=&t=downloads)
@@ -30,7 +42,7 @@ d3.geoTransverseMercator().rotate([69, 0])
 d3.geoPolyconic().rotate([54, 0])
 ````
 
-<img src="https://raw.githubusercontent.com/bayre/trase-atlas/master/img/Brazil.png" width="480" height="300">
+<img src="https://raw.githubusercontent.com/sei-international/trase-atlas/master/img/Brazil.png" width="480" height="300">
 
 ### Colombia
 * Source: [DANE 2017](https://geoportal.dane.gov.co/servicios/descarga-y-metadatos/descarga-mgn-marco-geoestadistico-nacional/)
@@ -41,7 +53,7 @@ d3.geoPolyconic().rotate([54, 0])
 d3.geoTransverseMercator().rotate([68, 4.6])
 ````
 
-<img src="https://raw.githubusercontent.com/bayre/trase-atlas/master/img/Colombia.png" width="480" height="300">
+<img src="https://raw.githubusercontent.com/sei-international/trase-atlas/master/img/Colombia.png" width="480" height="300">
 
 ### Ecuador
 * Source: [INEC 2015](https://www.ecuadorencifras.gob.ec/documentos/web-inec/Cartografia/Clasificador_Geografico/2015/)
@@ -52,7 +64,7 @@ d3.geoTransverseMercator().rotate([68, 4.6])
 d3.geoTransverseMercator().rotate([50, 55])
 ````
 
-<img src="https://raw.githubusercontent.com/bayre/trase-atlas/master/img/Ecuador.png" width="480" height="300">
+<img src="https://raw.githubusercontent.com/sei-international/trase-atlas/master/img/Ecuador.png" width="480" height="300">
 
 ### Indonesia
 * Source: BIG 2016
@@ -63,7 +75,7 @@ d3.geoTransverseMercator().rotate([50, 55])
 d3.geoTransverseMercator().rotate([-139.5, 0])
 ````
 
-<img src="https://raw.githubusercontent.com/bayre/trase-atlas/master/img/Indonesia.png" width="480" height="300">
+<img src="https://raw.githubusercontent.com/sei-international/trase-atlas/master/img/Indonesia.png" width="480" height="300">
 
 ### Paraguay
 * Source: [DGEEC 2019](http://geo.stp.gov.py/user/dgeec/tables/paraguay_2019_distritos/public)
