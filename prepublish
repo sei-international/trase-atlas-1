@@ -154,3 +154,10 @@ geo2topo -q 1e5 -n level3=<( \
   | topomerge level1=level2 \
   | node ./properties.js \
   > files/paraguay.json
+
+# Bolivia - download (SIIP)
+# http://siip.produccion.gob.bo:8080/geoserver/ows then saved on S3 as geojson via QGIS
+if [ ! -f build/bolivia.geojson ]; then
+  aws s3 cp s3://trase-storage/bolivia/spatial/BOUNDARIES/siip/Limite_Municipios.geojson
+  chmod a-x build/bolivia.*
+fi
