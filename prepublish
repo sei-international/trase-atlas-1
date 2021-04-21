@@ -181,3 +181,5 @@ geo2topo -q 1e5 -n level3=<( \
   | topomerge level1=level2 \
   | node ./properties.js \
   > files/bolivia.json
+
+mapshaper -i files/bolivia.json -o force files/bolivia.json
