@@ -1,5 +1,5 @@
 {
-  "name": "@sei-international/trase-atlas",
+  "name": "@trase/trase-atlas",
   "version": "1.1.0",
   "description": "Pre-built TopoJSON for use with Trase data",
   "license": "ISC",
