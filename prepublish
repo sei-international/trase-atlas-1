@@ -182,3 +182,35 @@ geo2topo -q 1e5 -n level3=<( \
   > files/bolivia.json
 
 mapshaper -i files/bolivia.json -o force files/bolivia.json
+
+# Cote D'Ivoire - download (SIIP)
+if [ ! -f build/cote_divoire.geojson ]; then
+  aws s3 cp s3://trase-storage/cote_divoire/spatial/BOUNDARIES/DEPARTEMENT/OUT/CIV_DEPARTEMENTS.geojson build/cote_divoire.geojson
+  chmod a-x build/bolivia.*
+fi
+
+# Cote D'Ivoire - dictionary
+ndjson-cat build/cote_divoire.geojson \
+  | ndjson-split 'd.features' \
+  | ndjson-map 'd.properties' \
+  | json2csv -n -q '' > build/dictionary.csv
+
+dictionary="$( \
+  sed -e 's:CI-::g' \
+      -e 's:_1::g'  \
+      -e 's:\.::g' build/dictionary.csv \
+    | awk -F "," -v OFS=';' '{if (NR!=1) {print sprintf("%04.0f", $8), $1, sprintf("%02.0f", $5), $6} else {print $8, $1, $5, $6} }' \
+  )"
+echo "$dictionary" > build/dictionary.csv
+
+# Cote D'Ivoire - topojson
+geo2topo -q 1e5 -n level4=<( \
+    mapshaper build/cote_divoire.geojson -simplify 2% keep-shapes -clean -o format=geojson - \
+      | ndjson-cat \
+      | ndjson-split 'd.features' \
+      | ndjson-map '(d.id = d.properties.LVL_4_CODE.toString(), delete d.properties, d)') \
+  | topomerge level3=level4 -k 'd.id.slice(0, 3)' \
+  | topomerge level2=level3 -k 'd.id.slice(0, 2)' \
+  | topomerge level1=level2 \
+  | node ./properties.js \
+  > files/cote_divoire.json
