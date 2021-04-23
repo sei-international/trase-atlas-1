@@ -23,10 +23,16 @@ function parseInput() {
   });
 }
 
+function toTitleCase(str) {
+  return str.toLowerCase().split(' ').map(function (word) {
+    return (word.charAt(0).toUpperCase() + word.slice(1));
+  }).join(' ');
+}
+
 function output([topology, dictionary]) {
   const keys = dictionary.columns
-  level3 = new Map(dictionary.map(d => [d[keys[0]], d[keys[1]].toUpperCase()]));
-  level2 = new Map(dictionary.map(d => [d[keys[2]], d[keys[3]].toUpperCase()]));
+  level3 = new Map(dictionary.map(d => [d[keys[0]], toTitleCase(d[keys[1]])]));
+  level2 = new Map(dictionary.map(d => [d[keys[2]], toTitleCase(d[keys[3]])]));
   for (const geometry of topology.objects.level3.geometries) {
     geometry.properties = {
       name: level3.get(geometry.id)
