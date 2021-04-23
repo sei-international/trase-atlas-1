@@ -166,13 +166,13 @@ fi
 ndjson-cat build/bolivia.geojson \
   | ndjson-split 'd.features' \
   | ndjson-map 'd.properties' \
-  | json2csv -n -q '' > build/dictionary.csv
-dictionary="$(awk -F "," -v OFS=';' '{if (NR!=1) {print sprintf("%06.0f", $5), $3, substr(sprintf("%06.0f", $5), 1, 2), $1} else {print $5, $3, "cod_dept", $1} }' build/dictionary.csv)"
+  | json2csv -n > build/dictionary.csv
+dictionary="$(awk -F "\"*,\"*" -v OFS=';' '{if (NR!=1) {print sprintf("%06.0f", $5), $3, substr(sprintf("%06.0f", $5), 1, 2), $1} else {print $5, $3, "cod_dept", $1} }' build/dictionary.csv)"
 echo "$dictionary" > build/dictionary.csv
 
 # Bolivia - topojson
 geo2topo -q 1e5 -n level3=<( \
-    mapshaper build/bolivia.geojson -simplify 2% keep-shapes -clean -o format=geojson - \
+    mapshaper build/bolivia.geojson -simplify 1% keep-shapes -clean -o format=geojson - \
       | ndjson-cat \
       | ndjson-split 'd.features' \
       | ndjson-map '(d.id = d.properties.cod_mun.toString().padStart(6, "0"), delete d.properties, d)') \
@@ -186,31 +186,32 @@ mapshaper -i files/bolivia.json -o force files/bolivia.json
 # Cote D'Ivoire - download (SIIP)
 if [ ! -f build/cote_divoire.geojson ]; then
   aws s3 cp s3://trase-storage/cote_divoire/spatial/BOUNDARIES/DEPARTEMENT/OUT/CIV_DEPARTEMENTS.geojson build/cote_divoire.geojson
-  chmod a-x build/bolivia.*
+  chmod a-x build/cote_divoire.*
 fi
 
 # Cote D'Ivoire - dictionary
 ndjson-cat build/cote_divoire.geojson \
   | ndjson-split 'd.features' \
   | ndjson-map 'd.properties' \
-  | json2csv -n -q '' > build/dictionary.csv
-
+  | json2csv -n > build/dictionary.csv
 dictionary="$( \
+  # awk -F "," -v OFS=';' '{print $8, $1, $5, $6}' build/dictionary.csv
   sed -e 's:CI-::g' \
       -e 's:_1::g'  \
       -e 's:\.::g' build/dictionary.csv \
-    | awk -F "," -v OFS=';' '{if (NR!=1) {print sprintf("%04.0f", $8), $1, sprintf("%02.0f", $5), $6} else {print $8, $1, $5, $6} }' \
+    | awk -F "\"*,\"*" -v OFS=';' '{if (NR!=1) {print sprintf("%04.0f", $8), $1, sprintf("%02.0f", $5), $6} else {print $8, $1, $5, $6} }' \
   )"
 echo "$dictionary" > build/dictionary.csv
 
 # Cote D'Ivoire - topojson
-geo2topo -q 1e5 -n level4=<( \
-    mapshaper build/cote_divoire.geojson -simplify 2% keep-shapes -clean -o format=geojson - \
+geo2topo -n level3=<( \
+    mapshaper build/cote_divoire.geojson -proj wgs84 from='+proj=utm +zone=30 +datum=WGS84 +units=m +no_defs' -clean -o format=geojson - \
       | ndjson-cat \
       | ndjson-split 'd.features' \
-      | ndjson-map '(d.id = d.properties.LVL_4_CODE.toString(), delete d.properties, d)') \
-  | topomerge level3=level4 -k 'd.id.slice(0, 3)' \
+      | ndjson-map '(d.id = d.properties.LVL_4_CODE.replace(/(CI-)|(_1)|(\.)/g, "").padStart(4, "0"), delete d.properties, d)') \
   | topomerge level2=level3 -k 'd.id.slice(0, 2)' \
   | topomerge level1=level2 \
   | node ./properties.js \
   > files/cote_divoire.json
+
+  mapshaper -i files/cote_divoire.json -o force files/cote_divoire.json

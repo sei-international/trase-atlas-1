@@ -1,6 +1,6 @@
 {
   "name": "@trase/trase-atlas",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Pre-built TopoJSON for use with Trase data",
   "license": "ISC",
   "keywords": [
@@ -8,7 +8,7 @@
     "geojson",
     "shapefile"
   ],
-  "author": "Trase / Ben Ayre",
+  "author": "Trase",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sei-international/trase-atlas.git"
