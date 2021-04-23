@@ -8,7 +8,7 @@
     "geojson",
     "shapefile"
   ],
-  "author": "Trase",
+  "author": "Trase / Ben Ayre",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sei-international/trase-atlas.git"
