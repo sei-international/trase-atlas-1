@@ -65,7 +65,7 @@ d3.geoTransverseMercator().rotate([68, 4.6])
 d3.geoMercator()
 ````
 
-<img src="https://raw.githubusercontent.com/sei-international/trase-atlas/master/img/CoteDIvoire.png" width="480" height="300">
+<img src="https://raw.githubusercontent.com/sei-international/trase-atlas/master/img/CotedIvoire.png" width="480" height="300">
 
 
 ### Ecuador
