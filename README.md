@@ -56,13 +56,13 @@ d3.geoTransverseMercator().rotate([68, 4.6])
 <img src="https://raw.githubusercontent.com/sei-international/trase-atlas/master/img/Colombia.png" width="480" height="300">
 
 
-### Côte D'Ivoire
+### Côte d'Ivoire
 * Source: BNETD
 * Projection: https://epsg.io/4326
 * [Download](https://cdn.jsdelivr.net/npm/@trase/trase-atlas@1.1/files/cote_divoire.json)
 
 ```js
-d3.geoTransverseMercator()
+d3.geoMercator()
 ````
 
 <img src="https://raw.githubusercontent.com/sei-international/trase-atlas/master/img/CoteDIvoire.png" width="480" height="300">
